@@ -1,21 +1,53 @@
-# Allow deploying the project to Cloudflare Workers
-# https://developers.cloudflare.com/workers/tutorials/deploy-button/
+# Sync from upstream (sveltia/sveltia-cms-auth) daily and deploy to Cloudflare Workers
+name: Sync & Deploy
 
-name: Build
 on:
-  repository_dispatch:
+  # Deploy on every push to main (including sync merges)
+  push:
+    branches: [main]
+  # Daily sync from upstream
+  schedule:
+    - cron: '30 5 * * *' # 5:30 UTC = 6:30/7:30 CET/CEST
+  # Manual trigger
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
 jobs:
-  deploy:
+  sync:
+    # Only sync on schedule or manual trigger, not on push
+    if: github.event_name != 'push'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout the branch
+      - name: Checkout fork
         uses: actions/checkout@v6
-      - name: Install pnpm
-        uses: pnpm/action-setup@v5
         with:
-          version: latest
-      - name: Build & Deploy Worker
+          fetch-depth: 0
+
+      - name: Rebase on upstream
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote add upstream https://github.com/sveltia/sveltia-cms-auth.git
+          git fetch upstream main
+          # Rebase fork commits on top of upstream — keeps linear history
+          git rebase upstream/main
+          git push --force-with-lease origin main
+
+  deploy:
+    # Deploy on push, or after successful sync
+    needs: [sync]
+    # Deploy on push (sync skipped), workflow_dispatch (even if sync fails), or after successful scheduled sync
+    if: always() && (github.event_name != 'schedule' || needs.sync.result == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          packageManager: npm
