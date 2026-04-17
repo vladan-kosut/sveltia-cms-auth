@@ -31,8 +31,25 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote add upstream https://github.com/sveltia/sveltia-cms-auth.git
           git fetch upstream main
-          # Rebase fork commits on top of upstream — keeps linear history
-          git rebase upstream/main
+          # Rebase fork commits on top of upstream — keeps linear history.
+          # We fully replaced deploy.yml with our own workflow, so upstream bumps
+          # to that file always conflict. Auto-resolve by keeping our version
+          # (during rebase "theirs" = working branch = our fork commit).
+          # Any conflict outside deploy.yml is a real issue and must fail.
+          if ! git rebase upstream/main; then
+            conflicts=$(git diff --name-only --diff-filter=U)
+            if [ "$conflicts" = ".github/workflows/deploy.yml" ]; then
+              echo "Conflict limited to deploy.yml — keeping fork version"
+              git checkout --theirs .github/workflows/deploy.yml
+              git add .github/workflows/deploy.yml
+              GIT_EDITOR=true git rebase --continue
+            else
+              echo "::error::Conflicts in files other than deploy.yml require manual resolution:"
+              echo "$conflicts"
+              git rebase --abort
+              exit 1
+            fi
+          fi
           git push --force-with-lease origin main
 
   deploy:
