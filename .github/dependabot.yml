@@ -1,0 +1,19 @@
+version: 2
+
+updates:
+  # ZAMERNE jen github-actions, ne npm.
+  #
+  # Tohle je fork `sveltia/sveltia-cms-auth` a `deploy.yml` denne rebasuje nase
+  # commity na upstream. npm zavislosti tedy uz spravuje upstream (chodi sem
+  # jako commity typu "Update dependencies") — dependabot npm PR by vyrabel
+  # commity na `package-lock.json`, ktere by se pri pristim rebase potkaly
+  # s upstream zmenami v `package.json` / `pnpm-lock.yaml`. Sync job umi
+  # auto-resolvnout konflikt jen v `deploy.yml`, cokoli jineho ho shodi.
+  #
+  # `deploy.yml` je naopak cisty nas soubor (upstream verzi jsme nahradili),
+  # takze bumpy akci jsou bezpecne — a bez nich akce zamrzly na verzich z dubna
+  # 2026 (odhalil check-workflow-drift 2026-08-03).
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
