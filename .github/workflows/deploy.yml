@@ -14,14 +14,23 @@ on:
 permissions:
   contents: write
 
+# Serializuje behy, ale zamerne NErusi rozdelany (`cancel-in-progress: false`).
+# Sync job dela rebase na upstream a `git push --force-with-lease`; zabit ho
+# uprostred je horsi nez pockat, a burst pushu tu stejne nehrozi - do repa se
+# tlaci jednou denne cronem.
+concurrency:
+  group: sync-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   sync:
     # Only sync on schedule or manual trigger, not on push
     if: github.event_name != 'push'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout fork
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -58,12 +67,13 @@ jobs:
     # Deploy on push (sync skipped), workflow_dispatch (even if sync fails), or after successful scheduled sync
     if: always() && (github.event_name != 'schedule' || needs.sync.result == 'success')
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Deploy to Cloudflare Workers
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
