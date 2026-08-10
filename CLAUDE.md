@@ -31,6 +31,27 @@ pnpm run check        # Lint + format + audit + spellcheck
 - Push after rebase triggers deploy job automatically
 - Fork-specific commits (CLAUDE.md, deploy.yml, package-lock.json) stay on top via rebase
 
+### What the force-push means for a local clone
+
+Every time upstream publishes, the cron rewrites the SHAs of our fork commits. A local clone that has not been touched since then keeps the **old** SHAs, so `git status` reports the branch as diverged — typically "N ahead, M behind". **This is expected and no work is at risk.**
+
+Do not try to resolve it by pushing, and do not measure it with `git rev-list --left-right --count`; that compares SHAs and will report our own already-published commits as unpushed work. Compare **patches**:
+
+```bash
+git fetch origin
+git cherry @{u} HEAD     # '-' = content already on remote, '+' = genuinely missing
+```
+
+All lines `-` → the clone is merely stale. Bring it in line with the remote:
+
+```bash
+git switch -C main origin/main
+```
+
+(`git reset --hard` does the same thing but is blocked by the `block-dangerous.sh` hook.) Only a `+` line means real undelivered work — investigate that one before touching the branch.
+
+**Why this is written down:** on 2026-08-10 a close-check measured this repo with `rev-list` and reported "5 commits unpushed since March, oldest work unbacked for five months" as a risk. `git cherry` showed all five as `-`; the patches had been on the remote the whole time under rewritten SHAs.
+
 ## Worker Environment Variables (CF Dashboard)
 
 - `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` — GitHub OAuth app credentials
