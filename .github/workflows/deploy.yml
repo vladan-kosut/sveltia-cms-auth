@@ -2,9 +2,14 @@
 name: Sync & Deploy
 
 on:
-  # Deploy on every push to main (including sync merges)
+  # Deploy on every push to main (including sync merges).
+  # Docs-only pushes are exempt: this Worker is shared by every CF Pages project,
+  # so a CLAUDE.md edit should not redeploy it. The daily `schedule` run below is
+  # unaffected by paths-ignore, so upstream syncs still deploy as before.
   push:
     branches: [main]
+    paths-ignore:
+      - 'CLAUDE.md'
   # Daily sync from upstream
   schedule:
     - cron: '30 5 * * *' # 5:30 UTC = 6:30/7:30 CET/CEST
