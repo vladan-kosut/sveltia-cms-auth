@@ -31,6 +31,8 @@ pnpm run check        # Lint + format + audit + spellcheck
 - Push after rebase triggers deploy job automatically
 - Fork-specific commits (CLAUDE.md, deploy.yml, package-lock.json) stay on top via rebase
 
+**`.nvmrc` is upstream's — do not touch it.** It currently reads `v26`, which looks wrong next to the Node 24 the rest of the fleet pins, and a cross-repo sweep will flag it (one did on 2026-08-14). It is not ours: the file is authored by the upstream maintainer and rewritten by the daily sync, and `deploy.yml` — the only workflow here — never reads it (no `setup-node`, no `node-version`). Editing it buys nothing and costs a conflict with the cron. The Node-24 migration rule in `DevProjekty/CLAUDE.md` applies to the Astro forks, not here.
+
 ### What the force-push means for a local clone
 
 Every time upstream publishes, the cron rewrites the SHAs of our fork commits. A local clone that has not been touched since then keeps the **old** SHAs, so `git status` reports the branch as diverged — typically "N ahead, M behind". **This is expected and no work is at risk.**
