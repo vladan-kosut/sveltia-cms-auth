@@ -61,6 +61,8 @@ git switch -C main origin/main
 
 ## Client-side Config
 
+<!-- check-doc-paths: ignore public/admin/config.yml (lives in the client projects, not here) -->
+
 Each Sveltia CMS project references this worker in `public/admin/config.yml`:
 
 ```yaml
