@@ -77,7 +77,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      # One retry after a pause: the Cloudflare API intermittently answers 5xx
+      # (2026-10-12: 504 on POST .../workers/scripts/sveltia-cms-auth/subdomain),
+      # and a failed scheduled run otherwise waits a day or needs a manual dispatch.
+      # A real error (bad token, broken code) just fails twice.
       - name: Deploy to Cloudflare Workers
+        id: deploy
+        continue-on-error: true
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          packageManager: npm
+
+      - name: Wait before retry
+        if: steps.deploy.outcome == 'failure'
+        run: sleep 60
+
+      - name: Deploy to Cloudflare Workers (retry)
+        if: steps.deploy.outcome == 'failure'
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
