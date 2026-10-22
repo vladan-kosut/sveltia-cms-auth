@@ -4,11 +4,12 @@ updates:
   # ZAMERNE jen github-actions, ne npm.
   #
   # Tohle je fork `sveltia/sveltia-cms-auth` a `deploy.yml` denne rebasuje nase
-  # commity na upstream. npm zavislosti tedy uz spravuje upstream (chodi sem
-  # jako commity typu "Update dependencies") — dependabot npm PR by vyrabel
-  # commity na `package-lock.json`, ktere by se pri pristim rebase potkaly
-  # s upstream zmenami v `package.json` / `pnpm-lock.yaml`. Sync job umi
-  # auto-resolvnout konflikt jen v `deploy.yml`, cokoli jineho ho shodi.
+  # commity na upstream. Zavislosti spravuje upstream v `pnpm-lock.yaml` (chodi
+  # sem jako commity typu "Update dependencies"); fork vlastni lockfile nema
+  # (`package-lock.json` vyrazen 2026-10-22, claude-config#121). Dependabot npm
+  # PR by menil `package.json` / `pnpm-lock.yaml` a pri pristim rebase by se
+  # potkal s upstreamem. Sync job umi auto-resolvnout konflikt jen v
+  # `deploy.yml`, cokoli jineho ho shodi.
   #
   # `deploy.yml` je naopak cisty nas soubor (upstream verzi jsme nahradili),
   # takze bumpy akci jsou bezpecne — a bez nich akce zamrzly na verzich z dubna
