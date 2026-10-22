@@ -22,16 +22,16 @@ pnpm run check        # Lint + format + audit + spellcheck
 
 - **Worker URL:** `https://sveltia-cms-auth.vibecore.workers.dev` (shared for all CF projects)
 - **CI/CD:** `.github/workflows/deploy.yml` — push to main triggers deploy via `wrangler-action`
-- **Package manager in CI:** npm (not pnpm) — wrangler-action default
+- **Package manager in CI:** pnpm, set up with `pnpm/setup` exactly like upstream's `deploy.yml` (`version: latest`, `runtime: node@26`). The fork keeps no lockfile of its own: dependencies come from upstream's `pnpm-lock.yaml` (`package-lock.json` was removed 2026-10-22).
 - **GitHub Secrets:** `CF_API_TOKEN`, `CF_ACCOUNT_ID`
 
 ## Upstream Sync
 
 - Daily cron (5:30 UTC): fetches `sveltia/sveltia-cms-auth` main, rebases fork commits, force-pushes
 - Push after rebase triggers deploy job automatically
-- Fork-specific commits (CLAUDE.md, deploy.yml, package-lock.json) stay on top via rebase
+- Fork-specific commits (CLAUDE.md, deploy.yml, dependabot.yml) stay on top via rebase
 
-**`.nvmrc` is upstream's — do not touch it.** It currently reads `v26`, which looks wrong next to the Node 24 the rest of the fleet pins, and a cross-repo sweep will flag it (one did on 2026-08-14). It is not ours: the file is authored by the upstream maintainer and rewritten by the daily sync, and `deploy.yml` — the only workflow here — never reads it (no `setup-node`, no `node-version`). Editing it buys nothing and costs a conflict with the cron. The Node-24 migration rule in `DevProjekty/CLAUDE.md` applies to the Astro forks, not here.
+**`.nvmrc` is upstream's — do not touch it.** It currently reads `v26`, which looks wrong next to the Node 24 the rest of the fleet pins, and a cross-repo sweep will flag it (one did on 2026-08-14). It is not ours: the file is authored by the upstream maintainer and rewritten by the daily sync, and `deploy.yml` — the only workflow here — never reads it (`pnpm/setup` pins `runtime: node@26` itself, like upstream). Editing it buys nothing and costs a conflict with the cron. The Node-24 migration rule in `DevProjekty/CLAUDE.md` applies to the Astro forks, not here.
 
 ### What the force-push means for a local clone
 
