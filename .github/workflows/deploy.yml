@@ -77,6 +77,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      # Deliberately the same as upstream's deploy.yml (pnpm-lock.yaml is upstream's
+      # lockfile; this fork keeps no lockfile of its own).
+      - name: Install pnpm and Node.js
+        uses: pnpm/setup@v3.0.0
+        with:
+          version: latest
+          runtime: node@26
+          cache: true
+
       # One retry after a pause: the Cloudflare API intermittently answers 5xx
       # (2026-10-12: 504 on POST .../workers/scripts/sveltia-cms-auth/subdomain),
       # and a failed scheduled run otherwise waits a day or needs a manual dispatch.
@@ -88,7 +97,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          packageManager: npm
+          packageManager: pnpm
 
       - name: Wait before retry
         if: steps.deploy.outcome == 'failure'
@@ -100,4 +109,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          packageManager: npm
+          packageManager: pnpm
